@@ -11,71 +11,70 @@
     />
     <style>
       body {
-        font-family: "Helvetica Neue", Arial, sans-serif;
-        background-color: #f4f4f9;
-        margin: 0;
-        padding: 0;
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f0f2f5;
       }
       .container {
-        margin-top: 30px;
-        max-width: 800px;
-      }
-      h1 {
-        color: #333;
-        font-weight: 300;
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      .alert {
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 15px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
       }
       .contest {
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s, box-shadow 0.3s;
-      }
-      .contest:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+        /* border: 1px solid #ddd; */
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        background-color: #12751f4f;
+        position: relative;
       }
       .contest h3 {
-        margin: 0;
-        color: #333;
-        font-size: 1.25rem;
-        font-weight: 400;
+        margin: 0 0 10px;
+        color: #112221;
       }
       .contest p {
-        margin: 10px 0 0;
+        margin: 0;
         color: #555;
-        font-size: 0.9rem;
       }
       .contest a {
-        color: #007bff;
+        color: #259c9c;
         text-decoration: none;
-        font-weight: 500;
       }
       .contest a:hover {
         text-decoration: underline;
       }
-      .alert-info {
-        border-color: #d1ecf1;
-        background-color: #d1ecf1;
-        color: #0c5460;
+      .platform-box {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 10px;
+        border-radius: 10px;
+        background-color: #1f3b3a;
+        color: #fff;
+        font-size: 0.8em;
+      }
+      .filter-container {
+        margin-bottom: 20px;
+      }
+      .alert {
+        margin-top: 20px;
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Contest Data</h1>
-      <div id="data" class="alert alert-info">Loading...</div>
+    <div class="p-1">
+      <h1 class="text-center mb-4">Contest Data</h1>
+      <div class="">
+        <input
+          type="text"
+          id="search"
+          class="form-control"
+          placeholder="Search contests by name..."
+        />
+        <select id="platformFilter" class="form-control mt-2">
+          <option value="">All Platforms</option>
+        </select>
+      </div>
+      <div id="data" class="mt-2">Loading...</div>
+      <button id="loadMore" class="btn btn-primary mt-3">Load More</button>
     </div>
 
     <!-- Bootstrap JS and dependencies -->
@@ -83,6 +82,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
+      let offset = 0;
+      const limit = 20;
+
       async function fetchData() {
         const username = "umanghirani"; // Your username
         const apiKey = "a8aed496a9a9a136b26402141b460934854d6960"; // Your API key
@@ -90,8 +92,8 @@
 
         // Construct the query parameters
         const params = new URLSearchParams({
-          limit: 10, // Number of contests per page
-          offset: 0, // Starting point
+          limit: limit, // Number of contests per page
+          offset: offset, // Starting point
           start__gte: new Date().toISOString(), // Start date from now
           order_by: "start", // Order by start date
           username: username, // Include username
@@ -116,6 +118,8 @@
 
           if (data && data.objects && data.objects.length > 0) {
             displayData(data);
+            updatePlatformOptions(data);
+            offset += limit; // Update offset for the next load
           } else {
             document.getElementById("data").innerHTML =
               '<div class="alert alert-warning">No contests available.</div>';
@@ -134,6 +138,11 @@
         data.objects.forEach((contest) => {
           const contestDiv = document.createElement("div");
           contestDiv.className = "contest";
+
+          const platformBox = document.createElement("div");
+          platformBox.className = "platform-box";
+          platformBox.textContent =
+            contest.resource?.name || "Unknown Platform";
 
           const contestTitle = document.createElement("h3");
           contestTitle.textContent = contest.event || "No name";
@@ -179,12 +188,60 @@
 
           contestDiv.appendChild(contestTitle);
           contestDiv.appendChild(contestDetails);
+          contestDiv.appendChild(platformBox);
           dataDiv.appendChild(contestDiv);
         });
       }
 
-      // Fetch data when the page loads
-      window.onload = fetchData;
+      function updatePlatformOptions(data) {
+        const platformFilter = document.getElementById("platformFilter");
+        const existingOptions = new Set(
+          Array.from(platformFilter.options).map((option) => option.value)
+        );
+
+        data.objects.forEach((contest) => {
+          contest.resource?.name &&
+            !existingOptions.has(contest.resource.name) &&
+            (function () {
+              const option = document.createElement("option");
+              option.value = contest.resource.name;
+              option.textContent = contest.resource.name;
+              platformFilter.appendChild(option);
+              existingOptions.add(contest.resource.name);
+            })();
+        });
+      }
+
+      function filterData() {
+        const searchQuery = document
+          .getElementById("search")
+          .value.toLowerCase();
+        const selectedPlatform =
+          document.getElementById("platformFilter").value;
+        const contests = document.querySelectorAll(".contest");
+
+        contests.forEach((contest) => {
+          const title = contest.querySelector("h3").textContent.toLowerCase();
+          const platform = contest.querySelector(".platform-box").textContent;
+          const matchesSearch = title.includes(searchQuery);
+          const matchesPlatform =
+            selectedPlatform === "" || platform === selectedPlatform;
+          contest.style.display =
+            matchesSearch && matchesPlatform ? "block" : "none";
+        });
+      }
+
+      document.getElementById("search").addEventListener("input", filterData);
+      document
+        .getElementById("platformFilter")
+        .addEventListener("change", filterData);
+
+      document.getElementById("loadMore").addEventListener("click", () => {
+        fetchData();
+      });
+
+      // Fetch initial data when the page loads
+      fetchData();
     </script>
   </body>
 </html>
