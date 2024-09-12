@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contest List</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center mb-4">Contest List</h1>
+      <div id="contestList" class="list-group"></div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      // Function to fetch contests from the Codeforces API
+      async function fetchContests() {
+        try {
+          const response = await fetch(
+            "https://codeforces.com/api/contest.list"
+          );
+          const data = await response.json();
+
+          if (data.status === "OK") {
+            displayContests(data.result);
+          } else {
+            console.error("Error fetching contests:", data.comment);
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      }
+
+      // Function to display contests on the webpage
+      function displayContests(contests) {
+        const contestList = document.getElementById("contestList");
+
+        contests.forEach((contest) => {
+          const listItem = document.createElement("a");
+          listItem.className =
+            "list-group-item list-group-item-action contest-item";
+          listItem.href = `https://codeforces.com/contests/${contest.id}`; // Adjust if needed
+          listItem.target = "_blank"; // Open in new tab
+
+          // Format date and duration
+          const endDate = new Date(
+            contest.startTimeSeconds * 1000
+          ).toLocaleDateString();
+          const startDate = new Date(
+            contest.startTimeSeconds * 1000
+          ).toLocaleTimeString();
+          const duration = formatDuration(contest.durationSeconds);
+
+          listItem.innerHTML = `
+                    <h5 class="mb-1">${contest.name}</h5>
+                    <p class="mb-1">ID: ${contest.id}</p>
+                    <small>Start: ${startDate} | End: ${endDate} | Duration: ${duration}</small>
+                `;
+          contestList.appendChild(listItem);
+        });
+      }
+
+      // Format duration in hours and minutes
+      function formatDuration(durationSeconds) {
+        const hours = Math.floor(durationSeconds / 3600);
+        const minutes = Math.floor((durationSeconds % 3600) / 60);
+        return `${hours}h ${minutes}m`;
+      }
+
+      // Fetch contests when the page loads
+      window.onload = fetchContests;
+    </script>
+  </body>
+</html>

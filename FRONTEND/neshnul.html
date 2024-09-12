@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contest Data</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      #data {
+        margin-top: 20px;
+      }
+      .contest {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+      .contest h3 {
+        margin: 0 0 10px;
+        color: #007bff;
+      }
+      .contest p {
+        margin: 0;
+        color: #555;
+      }
+      .contest a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      .contest a:hover {
+        text-decoration: underline;
+      }
+      .alert {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center mb-4">Contest Data</h1>
+      <div id="data" class="alert alert-info">Loading...</div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      async function fetchData() {
+        const username = "umanghirani"; // Your username
+        const apiKey = "a8aed496a9a9a136b26402141b460934854d6960"; // Your API key
+        const url = "https://clist.by/api/v1/contest/";
+
+        // Construct the query parameters
+        const params = new URLSearchParams({
+          limit: 5, // Number of contests per page
+          offset: 0, // Starting point
+          start__gte: "2024-01-01T00:00:00", // Example start date
+          order_by: "start", // Order by start date
+          username: username, // Include username
+          api_key: apiKey, // Include API key
+        });
+
+        try {
+          const response = await fetch(`${url}?${params.toString()}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log("Fetched data:", data); // Log data to debug
+
+          if (data && data.objects && data.objects.length > 0) {
+            displayData(data);
+          } else {
+            document.getElementById("data").innerHTML =
+              '<div class="alert alert-warning">No contests available.</div>';
+          }
+        } catch (error) {
+          console.error("There was a problem with the fetch operation:", error);
+          document.getElementById("data").innerHTML =
+            '<div class="alert alert-danger">Failed to load data. Please check the console for details.</div>';
+        }
+      }
+
+      function displayData(data) {
+        const dataDiv = document.getElementById("data");
+        dataDiv.innerHTML = "";
+
+        data.objects.forEach((contest) => {
+          const contestDiv = document.createElement("div");
+          contestDiv.className = "contest";
+
+          const contestTitle = document.createElement("h3");
+          contestTitle.textContent = contest.name || "No name";
+
+          const contestDetails = document.createElement("p");
+          const startDate = new Date(contest.start * 1000).toLocaleDateString();
+          const endDate = new Date(contest.end * 1000).toLocaleDateString();
+          contestDetails.innerHTML = `Start: ${startDate} | End: ${endDate} | <a href="${
+            contest.url || "#"
+          }" target="_blank">More details</a>`;
+
+          contestDiv.appendChild(contestTitle);
+          contestDiv.appendChild(contestDetails);
+          dataDiv.appendChild(contestDiv);
+        });
+      }
+
+      // Fetch data when the page loads
+      window.onload = fetchData;
+    </script>
+  </body>
+</html>

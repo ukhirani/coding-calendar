@@ -1,0 +1,34 @@
+body{
+    background-color: #dbecfb;
+    font-family: 'Roboto', sans-serif;
+
+    
+}
+.nav-search{
+    background-color: #dbecfb;
+}
+.nav-search:hover{
+  background-color:#9ad0ff;
+  transition: all 0.5s ease;
+  color:#001b33 ;
+
+}
+  
+  h1 {
+    font-weight: 700; /* Bold */
+  }
+  
+  p {
+    font-weight: 400; /* Regular */
+  }
+.navbar-brand{
+    font-weight:500;
+    /* font-style: ; */
+    color:#dbecfb ;
+}
+.navbar-brand:hover{
+  font-weight:500;
+  /* font-style: ; */
+  color:#9ad0ff ;
+  transition: all 0.5s ease;
+}
