@@ -14,7 +14,7 @@
         font-family: Arial, sans-serif;
         margin: 20px;
       }
-      #data {
+      .container {
         margin-top: 20px;
       }
       .contest {
@@ -45,7 +45,7 @@
     </style>
   </head>
   <body>
-    <div class="container mt-5">
+    <div class="container">
       <h1 class="text-center mb-4">Contest Data</h1>
       <div id="data" class="alert alert-info">Loading...</div>
     </div>
@@ -62,9 +62,9 @@
 
         // Construct the query parameters
         const params = new URLSearchParams({
-          limit: 5, // Number of contests per page
+          limit: 10, // Number of contests per page
           offset: 0, // Starting point
-          start__gte: "2024-01-01T00:00:00", // Example start date
+          start__gte: new Date().toISOString(), // Start date from now
           order_by: "start", // Order by start date
           username: username, // Include username
           api_key: apiKey, // Include API key
@@ -108,14 +108,46 @@
           contestDiv.className = "contest";
 
           const contestTitle = document.createElement("h3");
-          contestTitle.textContent = contest.name || "No name";
+          contestTitle.textContent = contest.event || "No name";
 
           const contestDetails = document.createElement("p");
-          const startDate = new Date(contest.start * 1000).toLocaleDateString();
-          const endDate = new Date(contest.end * 1000).toLocaleDateString();
-          contestDetails.innerHTML = `Start: ${startDate} | End: ${endDate} | <a href="${
-            contest.url || "#"
-          }" target="_blank">More details</a>`;
+
+          const startDate =
+            new Date(contest.start).toLocaleDateString("en-GB", {
+              weekday: "short",
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }) +
+            " " +
+            new Date(contest.start).toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+          const endDate =
+            new Date(contest.end).toLocaleDateString("en-GB", {
+              weekday: "short",
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }) +
+            " " +
+            new Date(contest.end).toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+          const startIn =
+            Math.round(
+              (new Date(contest.start) - new Date()) / (1000 * 60 * 60 * 24)
+            ) + " days";
+          const duration =
+            Math.round(contest.duration / (1000 * 60 * 60)) + " hours";
+
+          contestDetails.innerHTML = `Start time: ${startDate} | Starts in: ${startIn} | Duration: ${duration} | Event: <a href="${
+            contest.href || "#"
+          }" target="_blank">${contest.event || "No details"}</a>`;
 
           contestDiv.appendChild(contestTitle);
           contestDiv.appendChild(contestDetails);
