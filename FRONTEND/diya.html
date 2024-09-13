@@ -101,10 +101,9 @@
 
       /* Theme toggle button */
       #themeToggle {
-        
         top: 20px;
         right: 20px;
-        padding: 5x 5px;
+        padding: 5px 5px;
         background-color: white;
         color: black;
         border: none;
@@ -114,40 +113,62 @@
       #themeToggle.dark-mode {
         background-color: #282828 !important;
         color: #fff !important;
-      }.container{
+      }
+      .container {
         padding: 0px !important;
       }
     </style>
   </head>
   <body>
     <div class="p-1">
-      <nav class="navbar navbar-expand-lg rounded-3" style="background-color: #1a2939; padding: 5px">
+      <nav
+        class="navbar navbar-expand-lg rounded-3"
+        style="background-color: #1a2939; padding: 5px"
+      >
         <div class="container-fluid p-0">
-          <a class="navbar-brand p-1 " href="#"><i class="fa-regular fa-calendar p-2"></i>Coding Calendar</a>
-          <button class="navbar-toggler bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <a class="navbar-brand p-1" href="#"
+            ><i class="fa-regular fa-calendar p-2"></i>Coding Calendar</a
+          >
+          <button
+            class="navbar-toggler bg-white"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0"></ul>
             <form class="d-flex border-0" role="search">
-              <input id="search" class="form-control me-2 border-0" type="search" placeholder="Search" aria-label="Search" />
+              <input
+                id="search"
+                class="form-control me-2 border-0"
+                type="search"
+                placeholder="Search"
+                aria-label="Search"
+              />
               <select id="platformFilter" class="form-control me-2">
                 <option value="">All Platforms</option>
               </select>
             </form>
             <!-- Moved the theme toggle button to the rightmost part -->
-            <button id="themeToggle" class="btn btn-outline-light" type="button">
+            <button
+              id="themeToggle"
+              class="btn btn-outline-light"
+              type="button"
+            >
               <i id="themeIcon" class="bi bi-moon"></i>
             </button>
           </div>
         </div>
       </nav>
-      
-      </div>
-
-      <div id="data" class="mt-2">Loading...</div>
-      <button id="loadMore" class="btn btn-primary mt-3">Load More</button>
     </div>
+
+    <div id="data" class="mt-2">Loading...</div>
+    <button id="loadMore" class="btn btn-primary mt-3">Load More</button>
 
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -156,6 +177,7 @@
     <script>
       let offset = 0;
       const limit = 20;
+      let allContests = [];
 
       async function fetchData() {
         const username = "umanghirani"; // Your username
@@ -188,8 +210,9 @@
           console.log("Fetched data:", data);
 
           if (data && data.objects && data.objects.length > 0) {
-            displayData(data);
-            updatePlatformOptions(data);
+            allContests = allContests.concat(data.objects);
+            displayData(allContests);
+            updatePlatformOptions(allContests);
             offset += limit;
           } else {
             document.getElementById("data").innerHTML =
@@ -202,11 +225,11 @@
         }
       }
 
-      function displayData(data) {
+      function displayData(contests) {
         const dataDiv = document.getElementById("data");
         dataDiv.innerHTML = "";
 
-        data.objects.forEach((contest) => {
+        contests.forEach((contest) => {
           const contestDiv = document.createElement("div");
           contestDiv.className = "contest";
 
@@ -262,11 +285,11 @@
         });
       }
 
-      function updatePlatformOptions(data) {
+      function updatePlatformOptions(contests) {
         const platformFilter = document.getElementById("platformFilter");
         const platforms = new Set();
 
-        data.objects.forEach((contest) => {
+        contests.forEach((contest) => {
           if (contest.resource && contest.resource.name) {
             platforms.add(contest.resource.name);
           }
@@ -286,9 +309,26 @@
         fetchData();
       }
 
+      function filterContests() {
+        const selectedPlatform =
+          document.getElementById("platformFilter").value;
+        if (selectedPlatform) {
+          const filteredContests = allContests.filter(
+            (contest) => contest.resource?.name === selectedPlatform
+          );
+          displayData(filteredContests);
+        } else {
+          displayData(allContests);
+        }
+      }
+
       document
         .getElementById("loadMore")
         .addEventListener("click", loadMoreContests);
+
+      document
+        .getElementById("platformFilter")
+        .addEventListener("change", filterContests);
 
       document.addEventListener("DOMContentLoaded", fetchData);
 
