@@ -13,6 +13,21 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css"
       rel="stylesheet"
     />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="styles/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -65,13 +80,14 @@
       /* Dark theme styles */
       body.dark-mode {
         background-color: #121212;
-        color: #e0e0e0;
+        color: #e0e0e0 !important;
       }
       .dark-mode .contest {
-        background-color: #1e1e1e;
+        background-color: #282828;
       }
       .dark-mode .platform-box {
-        background-color: #3a3a3a;
+        background-color: white;
+        color: black;
       }
       .dark-mode .contest a {
         color: #80cbc4;
@@ -79,40 +95,56 @@
       .dark-mode .contest h3 {
         color: #ffffff;
       }
+      .dark-mode #text {
+        color: #ffffff !important;
+      }
 
       /* Theme toggle button */
       #themeToggle {
-        position: fixed;
+        
         top: 20px;
         right: 20px;
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: #fff;
+        padding: 5x 5px;
+        background-color: white;
+        color: black;
         border: none;
-        border-radius: 5px;
+        border-radius: 20px;
         cursor: pointer;
       }
       #themeToggle.dark-mode {
-        background-color: #333;
-        color: #fff;
+        background-color: #282828 !important;
+        color: #fff !important;
+      }.container{
+        padding: 0px !important;
       }
     </style>
   </head>
   <body>
     <div class="p-1">
-      <button id="themeToggle"><i id="themeIcon" class="bi bi-moon"></i></button>
-      <h1 class="text-center mb-4">Contest Data</h1>
-      <div class="">
-        <input
-          type="text"
-          id="search"
-          class="form-control"
-          placeholder="Search contests by name..."
-        />
-        <select id="platformFilter" class="form-control mt-2">
-          <option value="">All Platforms</option>
-        </select>
+      <nav class="navbar navbar-expand-lg rounded-3" style="background-color: #1a2939; padding: 5px">
+        <div class="container-fluid p-0">
+          <a class="navbar-brand p-1 " href="#"><i class="fa-regular fa-calendar p-2"></i>Coding Calendar</a>
+          <button class="navbar-toggler bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0"></ul>
+            <form class="d-flex border-0" role="search">
+              <input id="search" class="form-control me-2 border-0" type="search" placeholder="Search" aria-label="Search" />
+              <select id="platformFilter" class="form-control me-2">
+                <option value="">All Platforms</option>
+              </select>
+            </form>
+            <!-- Moved the theme toggle button to the rightmost part -->
+            <button id="themeToggle" class="btn btn-outline-light" type="button">
+              <i id="themeIcon" class="bi bi-moon"></i>
+            </button>
+          </div>
+        </div>
+      </nav>
+      
       </div>
+
       <div id="data" class="mt-2">Loading...</div>
       <button id="loadMore" class="btn btn-primary mt-3">Load More</button>
     </div>
@@ -214,19 +246,17 @@
               minute: "2-digit",
             });
 
-          const startIn =
-            Math.round(
-              (new Date(contest.start) - new Date()) / (1000 * 60 * 60 * 24)
-            ) + " days";
-          const duration =
-            Math.round(contest.duration / (1000 * 60 * 60)) + " hours";
+          contestDetails.innerHTML = `<b>Start:</b> ${startDate} | <b>End:</b> ${endDate}`;
 
-          contestDetails.innerHTML = `Start time: ${startDate} | Starts in: ${startIn} | Duration: ${duration} | Event: <a href="${
-            contest.href || "#"
-          }" target="_blank">${contest.event || "No details"}</a>`;
+          const contestLink = document.createElement("a");
+          contestLink.href = contest.href;
+          contestLink.target = "_blank";
+          contestLink.rel = "noopener noreferrer";
+          contestLink.textContent = "More Info";
 
           contestDiv.appendChild(contestTitle);
           contestDiv.appendChild(contestDetails);
+          contestDiv.appendChild(contestLink);
           contestDiv.appendChild(platformBox);
           dataDiv.appendChild(contestDiv);
         });
@@ -234,73 +264,49 @@
 
       function updatePlatformOptions(data) {
         const platformFilter = document.getElementById("platformFilter");
-        const existingOptions = new Set(
-          Array.from(platformFilter.options).map((option) => option.value)
-        );
+        const platforms = new Set();
 
         data.objects.forEach((contest) => {
-          contest.resource?.name &&
-            !existingOptions.has(contest.resource.name) &&
-            (function () {
-              const option = document.createElement("option");
-              option.value = contest.resource.name;
-              option.textContent = contest.resource.name;
-              platformFilter.appendChild(option);
-              existingOptions.add(contest.resource.name);
-            })();
+          if (contest.resource && contest.resource.name) {
+            platforms.add(contest.resource.name);
+          }
+        });
+
+        platformFilter.innerHTML = '<option value="">All Platforms</option>';
+
+        platforms.forEach((platform) => {
+          const option = document.createElement("option");
+          option.value = platform;
+          option.textContent = platform;
+          platformFilter.appendChild(option);
         });
       }
 
-      function filterData() {
-        const searchQuery = document
-          .getElementById("search")
-          .value.toLowerCase();
-        const selectedPlatform =
-          document.getElementById("platformFilter").value;
-        const contests = document.querySelectorAll(".contest");
-
-        contests.forEach((contest) => {
-          const title = contest.querySelector("h3").textContent.toLowerCase();
-          const platform = contest.querySelector(".platform-box").textContent;
-          const matchesSearch = title.includes(searchQuery);
-          const matchesPlatform =
-            selectedPlatform === "" || platform === selectedPlatform;
-
-          contest.style.display =
-            matchesSearch && matchesPlatform ? "block" : "none";
-        });
+      function loadMoreContests() {
+        fetchData();
       }
 
       document
         .getElementById("loadMore")
-        .addEventListener("click", fetchData);
+        .addEventListener("click", loadMoreContests);
 
-      document.getElementById("search").addEventListener("input", filterData);
-      document
-        .getElementById("platformFilter")
-        .addEventListener("change", filterData);
+      document.addEventListener("DOMContentLoaded", fetchData);
 
       // Theme toggle functionality
-// Theme toggle functionality
-const themeToggle = document.getElementById("themeToggle");
-const themeIcon = document.getElementById("themeIcon");
+      const themeToggle = document.getElementById("themeToggle");
+      const body = document.body;
 
-themeToggle.addEventListener("click", () => {
-  // Toggle the dark mode class on the body
-  document.body.classList.toggle("dark-mode");
+      themeToggle.addEventListener("click", function () {
+        body.classList.toggle("dark-mode");
+        themeToggle.classList.toggle("dark-mode");
 
-  // Change the icon based on the current theme
-  if (document.body.classList.contains("dark-mode")) {
-    themeIcon.classList.remove("bi-moon");
-    themeIcon.classList.add("bi-brightness-high");
-  } else {
-    themeIcon.classList.remove("bi-brightness-high");
-    themeIcon.classList.add("bi-moon");
-  }
-});
-
-      // Fetch initial data on page load
-      fetchData();
+        const themeIcon = document.getElementById("themeIcon");
+        if (themeIcon.classList.contains("bi-moon")) {
+          themeIcon.classList.replace("bi-moon", "bi-sun");
+        } else {
+          themeIcon.classList.replace("bi-sun", "bi-moon");
+        }
+      });
     </script>
   </body>
 </html>
