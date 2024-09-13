@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contest Data</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f0f2f5;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      .container {
+        margin-top: 20px;
+      }
+      .contest {
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        background-color: #12751f4f;
+        position: relative;
+      }
+      .contest h3 {
+        margin: 0 0 10px;
+        color: #112221;
+      }
+      .contest p {
+        margin: 0;
+        color: #555;
+      }
+      .contest a {
+        color: #259c9c;
+        text-decoration: none;
+      }
+      .contest a:hover {
+        text-decoration: underline;
+      }
+      .platform-box {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 10px;
+        border-radius: 10px;
+        background-color: #1f3b3a;
+        color: #fff;
+        font-size: 0.8em;
+      }
+      .filter-container {
+        margin-bottom: 20px;
+      }
+      .alert {
+        margin-top: 20px;
+      }
+
+      /* Dark theme styles */
+      body.dark-mode {
+        background-color: #121212;
+        color: #e0e0e0;
+      }
+      .dark-mode .contest {
+        background-color: #1e1e1e;
+      }
+      .dark-mode .platform-box {
+        background-color: #3a3a3a;
+      }
+      .dark-mode .contest a {
+        color: #80cbc4;
+      }
+      .dark-mode .contest h3 {
+        color: #ffffff;
+      }
+
+      /* Theme toggle button */
+      #themeToggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      #themeToggle.dark-mode {
+        background-color: #333;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="p-1">
+      <button id="themeToggle"><i id="themeIcon" class="bi bi-moon"></i></button>
+      <h1 class="text-center mb-4">Contest Data</h1>
+      <div class="">
+        <input
+          type="text"
+          id="search"
+          class="form-control"
+          placeholder="Search contests by name..."
+        />
+        <select id="platformFilter" class="form-control mt-2">
+          <option value="">All Platforms</option>
+        </select>
+      </div>
+      <div id="data" class="mt-2">Loading...</div>
+      <button id="loadMore" class="btn btn-primary mt-3">Load More</button>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      let offset = 0;
+      const limit = 20;
+
+      async function fetchData() {
+        const username = "umanghirani"; // Your username
+        const apiKey = "a8aed496a9a9a136b26402141b460934854d6960"; // Your API key
+        const url = "https://clist.by/api/v1/contest/";
+
+        const params = new URLSearchParams({
+          limit: limit,
+          offset: offset,
+          start__gte: new Date().toISOString(),
+          order_by: "start",
+          username: username,
+          api_key: apiKey,
+        });
+
+        try {
+          const response = await fetch(`${url}?${params.toString()}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log("Fetched data:", data);
+
+          if (data && data.objects && data.objects.length > 0) {
+            displayData(data);
+            updatePlatformOptions(data);
+            offset += limit;
+          } else {
+            document.getElementById("data").innerHTML =
+              '<div class="alert alert-warning">No contests available.</div>';
+          }
+        } catch (error) {
+          console.error("There was a problem with the fetch operation:", error);
+          document.getElementById("data").innerHTML =
+            '<div class="alert alert-danger">Failed to load data. Please check the console for details.</div>';
+        }
+      }
+
+      function displayData(data) {
+        const dataDiv = document.getElementById("data");
+        dataDiv.innerHTML = "";
+
+        data.objects.forEach((contest) => {
+          const contestDiv = document.createElement("div");
+          contestDiv.className = "contest";
+
+          const platformBox = document.createElement("div");
+          platformBox.className = "platform-box";
+          platformBox.textContent =
+            contest.resource?.name || "Unknown Platform";
+
+          const contestTitle = document.createElement("h3");
+          contestTitle.textContent = contest.event || "No name";
+
+          const contestDetails = document.createElement("p");
+
+          const startDate =
+            new Date(contest.start).toLocaleDateString("en-GB", {
+              weekday: "short",
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }) +
+            " " +
+            new Date(contest.start).toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+          const endDate =
+            new Date(contest.end).toLocaleDateString("en-GB", {
+              weekday: "short",
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }) +
+            " " +
+            new Date(contest.end).toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+          const startIn =
+            Math.round(
+              (new Date(contest.start) - new Date()) / (1000 * 60 * 60 * 24)
+            ) + " days";
+          const duration =
+            Math.round(contest.duration / (1000 * 60 * 60)) + " hours";
+
+          contestDetails.innerHTML = `Start time: ${startDate} | Starts in: ${startIn} | Duration: ${duration} | Event: <a href="${
+            contest.href || "#"
+          }" target="_blank">${contest.event || "No details"}</a>`;
+
+          contestDiv.appendChild(contestTitle);
+          contestDiv.appendChild(contestDetails);
+          contestDiv.appendChild(platformBox);
+          dataDiv.appendChild(contestDiv);
+        });
+      }
+
+      function updatePlatformOptions(data) {
+        const platformFilter = document.getElementById("platformFilter");
+        const existingOptions = new Set(
+          Array.from(platformFilter.options).map((option) => option.value)
+        );
+
+        data.objects.forEach((contest) => {
+          contest.resource?.name &&
+            !existingOptions.has(contest.resource.name) &&
+            (function () {
+              const option = document.createElement("option");
+              option.value = contest.resource.name;
+              option.textContent = contest.resource.name;
+              platformFilter.appendChild(option);
+              existingOptions.add(contest.resource.name);
+            })();
+        });
+      }
+
+      function filterData() {
+        const searchQuery = document
+          .getElementById("search")
+          .value.toLowerCase();
+        const selectedPlatform =
+          document.getElementById("platformFilter").value;
+        const contests = document.querySelectorAll(".contest");
+
+        contests.forEach((contest) => {
+          const title = contest.querySelector("h3").textContent.toLowerCase();
+          const platform = contest.querySelector(".platform-box").textContent;
+          const matchesSearch = title.includes(searchQuery);
+          const matchesPlatform =
+            selectedPlatform === "" || platform === selectedPlatform;
+
+          contest.style.display =
+            matchesSearch && matchesPlatform ? "block" : "none";
+        });
+      }
+
+      document
+        .getElementById("loadMore")
+        .addEventListener("click", fetchData);
+
+      document.getElementById("search").addEventListener("input", filterData);
+      document
+        .getElementById("platformFilter")
+        .addEventListener("change", filterData);
+
+      // Theme toggle functionality
+// Theme toggle functionality
+const themeToggle = document.getElementById("themeToggle");
+const themeIcon = document.getElementById("themeIcon");
+
+themeToggle.addEventListener("click", () => {
+  // Toggle the dark mode class on the body
+  document.body.classList.toggle("dark-mode");
+
+  // Change the icon based on the current theme
+  if (document.body.classList.contains("dark-mode")) {
+    themeIcon.classList.remove("bi-moon");
+    themeIcon.classList.add("bi-brightness-high");
+  } else {
+    themeIcon.classList.remove("bi-brightness-high");
+    themeIcon.classList.add("bi-moon");
+  }
+});
+
+      // Fetch initial data on page load
+      fetchData();
+    </script>
+  </body>
+</html>
